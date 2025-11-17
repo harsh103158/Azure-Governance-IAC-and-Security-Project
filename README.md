@@ -57,7 +57,7 @@ A pre-existing Azure Policy was assigned to the environment to **Deny** the crea
 The initial deployment attempt, which defaulted to a non-compliant SKU, failed immediately.
 
 > *The Azure Policy blocks the non-compliant deployment:*
-> **![Policy Denial Screenshot](Screenshot%202025-11-16%20021825.png)**
+> **![Policy Denial Screenshot](https://github.com/harsh103158/Azure-Governance-IAC-and-Security-Project/blob/7a203a8b2570a4b7cfb5905a3bbe5810bb0acace/images/Screenshot%202025-11-16%20014825.png)**
 
 ### The Solution
 The Storage Account was successfully provisioned independently using the compliant parameter: **`storageSKU: Standard_GRS`**.
