@@ -1,0 +1,223 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": { "description": "Location for all resources." }
+    },
+    "vmssName": {
+      "type": "string",
+      "defaultValue": "webVMSS",
+      "metadata": { "description": "The name of the Virtual Machine Scale Set." }
+    },
+    "instanceCount": {
+      "type": "int",
+      "defaultValue": 2,
+      "metadata": { "description": "Number of VM instances in the scale set." }
+    },
+    "adminUsername": {
+      "type": "string",
+      "defaultValue": "azureuser"
+    },
+    "adminPassword": {
+      "type": "securestring"
+    },
+    "storageSku": {
+      "type": "string",
+      "defaultValue": "Standard_GRS",
+      "metadata": { "description": "Storage Account SKU (e.g., Standard_GRS)." }
+    }
+  },
+  "variables": {
+    "vnetName": "vnet-iac-prod",
+    "subnetName": "default",
+    "publicIPName": "pip-vmss-frontend",
+    "loadBalancerName": "lb-vmss-public",
+    "lbFrontendIPConfigName": "lbFrontend",
+    "lbBackendPoolName": "lbBackendPool",
+    "lbProbeName": "httpProbe",
+    "lbRuleName": "httpRule",
+    "nicName": "vmss-nic-config",
+    "ipConfigName": "vmss-ip-config",
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('subnetName'))]"
+  },
+  "resources": [
+    // 1. Virtual Network
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2023-04-01",
+      "name": "[variables('vnetName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [ "10.0.0.0/16" ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": { "addressPrefix": "10.0.1.0/24" }
+          }
+        ]
+      }
+    },
+    // 2. Public IP Address (PIP)
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2023-04-01",
+      "name": "[variables('publicIPName')]",
+      "location": "[parameters('location')]",
+      "sku": { "name": "Standard" },
+      "properties": { "publicIPAllocationMethod": "Static" }
+    },
+    // 3. Load Balancer (LB)
+    {
+      "type": "Microsoft.Network/loadBalancers",
+      "apiVersion": "2023-04-01",
+      "name": "[variables('loadBalancerName')]",
+      "location": "[parameters('location')]",
+      "sku": { "name": "Standard" },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPName'))]"
+      ],
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "[variables('lbFrontendIPConfigName')]",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPName'))]"
+              }
+            }
+          }
+        ],
+        "backendAddressPools": [
+          { "name": "[variables('lbBackendPoolName')]" }
+        ],
+        "probes": [
+          {
+            "name": "[variables('lbProbeName')]",
+            "properties": {
+              "protocol": "Tcp",
+              "port": 80,
+              "intervalInSeconds": 5,
+              "numberOfProbes": 2
+            }
+          }
+        ],
+        "loadBalancingRules": [
+          {
+            "name": "[variables('lbRuleName')]",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', variables('loadBalancerName'), variables('lbFrontendIPConfigName'))]"
+              },
+              "backendAddressPool": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadBalancerName'), variables('lbBackendPoolName'))]"
+              },
+              "probe": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/probes', variables('loadBalancerName'), variables('lbProbeName'))]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 80,
+              "backendPort": 80,
+              "enableFloatingIP": false,
+              "idleTimeoutInMinutes": 4,
+              "loadDistribution": "Default"
+            }
+          }
+        ]
+      }
+    },
+    // 4. Virtual Machine Scale Set (VMSS)
+    {
+      "type": "Microsoft.Compute/virtualMachineScaleSets",
+      "apiVersion": "2023-03-01",
+      "name": "[parameters('vmssName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard_B2ms", 
+        "tier": "Standard",
+        "capacity": "[parameters('instanceCount')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+        "[resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName'))]"
+      ],
+      "properties": {
+        "upgradePolicy": { "mode": "Manual" }, // Requires manual instance upgrade
+        "virtualMachineProfile": {
+          "osProfile": {
+            "computerNamePrefix": "[parameters('vmssName')]",
+            "adminUsername": "[parameters('adminUsername')]",
+            "adminPassword": "[parameters('adminPassword')]"
+          },
+          "storageProfile": {
+            "imageReference": {
+              "publisher": "MicrosoftWindowsServer",
+              "offer": "WindowsServer",
+              "sku": "2025-datacenter", // Latest OS for compliance
+              "version": "latest"
+            },
+            "osDisk": {
+              "createOption": "FromImage",
+              "managedDisk": {
+                "storageAccountType": "Standard_LRS"
+              }
+            }
+          },
+          "networkProfile": {
+            "networkInterfaceConfigurations": [
+              {
+                "name": "[variables('nicName')]",
+                "properties": {
+                  "primary": true,
+                  "ipConfigurations": [
+                    {
+                      "name": "[variables('ipConfigName')]",
+                      "properties": {
+                        "subnet": { "id": "[variables('subnetRef')]" },
+                        "loadBalancerBackendAddressPools": [
+                          { "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadBalancerName'), variables('lbBackendPoolName'))]" }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          // Extension Profile: Install IIS and deploy a basic site
+          "extensionProfile": {
+            "extensions": [
+              {
+                "name": "IISCSE",
+                "properties": {
+                  "publisher": "Microsoft.Compute",
+                  "type": "CustomScriptExtension",
+                  "typeHandlerVersion": "1.10",
+                  "autoUpgradeMinorVersion": true,
+                  "settings": {
+                    "fileUris": [ "https://storagesjgzuuddqkcae.blob.core.windows.net/scripts/install-iis.ps1" ],
+                    "commandToExecute": "powershell -ExecutionPolicy Unrestricted -File install-iis.ps1"}
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+    // 5. Azure Storage Account (Data/Governance Target)
+    // {
+    //   "type": "Microsoft.Storage/storageAccounts",
+    //   "apiVersion": "2023-01-01",
+    //   "name": "[concat('store', uniqueString(resourceGroup().id))]",
+    //   "location": "[parameters('location')]",
+    //   "sku": {
+    //     "name": "[parameters('storageSku')]"
+    //   },
+    //   "kind": "StorageV2"
+    // }
+  ]
+}

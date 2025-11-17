@@ -1,0 +1,14 @@
+{
+  "Name": "Limited Network Contributor",
+  "Description": "Allows limited network configuration actions.",
+  "AssignableScopes": [
+    "/subscriptions/ef80a3ed-c2bd-4226-ae17-30ad9781d69c/resourcegroups/RG-Prod"
+  ],
+  "Actions": [
+    "Microsoft.Network/loadBalancers/read",
+    "Microsoft.Network/networkInterfaces/write"
+  ],
+  "NotActions": [],
+  "DataActions": [],
+  "NotDataActions": []
+}
