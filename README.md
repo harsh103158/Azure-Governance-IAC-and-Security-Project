@@ -20,9 +20,6 @@ The core infrastructure is defined in `VNet-LB-VMSS-Storage.json` and includes t
 | **Web Service** | Custom Script Extension | Installs IIS and configures a dynamic welcome page via `install-iis.ps1`. |
 | **Storage** | Deployed Separately | Policy-compliant Storage Account used to host the installation script. |
 
-*Resources post deployment*
-![resources](https://github.com/harsh103158/Azure-Governance-IAC-and-Security-Project/blob/89f78e669f232cdb177f4b78382e20c5c345094d/images/Screenshot%202025-11-17%20033045.png)
-
 ## 🛠️ Key Technical Solutions & Troubleshooting
 
 The project involved overcoming several common real-world deployment challenges:
@@ -49,9 +46,55 @@ The custom role, **Limited Network Contributor**, grants highly specific permiss
 | `Microsoft.Network/loadBalancers/read` | Allows user to monitor the Load Balancer status. |
 | `Microsoft.Network/networkInterfaces/write` | Allows user to perform necessary maintenance/configuration on the VMSS NICs. |
 
-### Role Creation and Assignment (PowerShell)
+## 🔒 I. Governance: Geo-Redundancy Policy Enforcement
 
-The role was successfully created and assigned after dynamically replacing the `$subid` placeholder in the JSON file.
+The project validated a critical organizational policy requiring Geo-Redundant storage for high availability and data residency compliance.
+
+### The Policy
+A pre-existing Azure Policy was assigned to the environment to **Deny** the creation of any Storage Account that does not use a Geo-Redundant SKU.
+
+### The Validation (Policy Enforcement)
+The initial deployment attempt, which defaulted to a non-compliant SKU, failed immediately.
+
+> *The Azure Policy blocks the non-compliant deployment:*
+> **![Policy Denial Screenshot](Screenshot%202025-11-16%20021825.png)**
+
+### The Solution
+The Storage Account was successfully provisioned independently using the compliant parameter: **`storageSKU: Standard_GRS`**.
+
+---
+
+## 🛠️ II. Infrastructure Resilience Fixes
+
+The deployment required significant troubleshooting to achieve a successful Provisioning State:
+
+### A. Custom Script Extension (CSE) Fix
+The VM Scale Set (VMSS) deployment initially failed due to the complex escaping rules required for inline Base64 encoding (Code: `VMExtensionProvisioningError`).
+
+* **Resolution:** The configuration was updated to use the **File Download Method**. The `install-iis.ps1` script was hosted on a public blob, and the CSE was configured to download and execute it via `fileUris` and a simple `commandToExecute`.
+
+### B. Final Success
+All infrastructure issues (including dependencies and CSE) were resolved, resulting in a successful VMSS deployment.
+
+> *Successful VMSS Deployment Proof:*
+> **![Successful Deployment After Fixes](https://github.com/harsh103158/Azure-Governance-IAC-and-Security-Project/blob/89f78e669f232cdb177f4b78382e20c5c345094d/images/Screenshot%202025-11-17%20033045.png)
+
+---
+
+## 🔐 III. Security: Least Privilege RBAC
+
+The final step was to enforce the Principle of Least Privilege by creating a custom role definition and assigning it to a user.
+
+### Custom Role: `Limited Network Contributor`
+This custom role was created to restrict a user to only two specific actions, preventing them from modifying critical network infrastructure while allowing maintenance on the VM Scale Set's network interfaces (NICs).
+
+| Action | Purpose |
+| :--- | :--- |
+| `Microsoft.Network/loadBalancers/read` | Allows viewing of the Load Balancer configuration. |
+| `Microsoft.Network/networkInterfaces/write` | Allows maintenance on the VMSS Network Interfaces (NICs). |
+
+### Role Creation & Assignment
+The custom role was created by importing "network-contributor-file.json" file and was then successfully assigned.
 
 ```powershell
 # 1. Define Variables
