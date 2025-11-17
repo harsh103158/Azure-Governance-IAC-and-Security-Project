@@ -19,10 +19,9 @@ The core infrastructure is defined in `VNet-LB-VMSS-Storage.json` and includes t
 | **Compute** | `webVMSS` | Virtual Machine Scale Set (2 instances) running **Windows Server 2025**. |
 | **Web Service** | Custom Script Extension | Installs IIS and configures a dynamic welcome page via `install-iis.ps1`. |
 | **Storage** | Deployed Separately | Policy-compliant Storage Account used to host the installation script. |
-*Resources post deployment*
-![resources](
 
----
+*Resources post deployment*
+![resources](https://github.com/harsh103158/Azure-Governance-IAC-and-Security-Project/blob/89f78e669f232cdb177f4b78382e20c5c345094d/images/Screenshot%202025-11-17%20033045.png)
 
 ## 🛠️ Key Technical Solutions & Troubleshooting
 
