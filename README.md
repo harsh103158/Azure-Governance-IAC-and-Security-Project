@@ -34,30 +34,19 @@ The project involved overcoming several common real-world deployment challenges:
 
 ---
 
-## 🔒 Security: Custom RBAC Implementation
-
-To enforce the principle of **Least Privilege**, a custom Role-Based Access Control (RBAC) role was created and assigned at the Resource Group scope.
-
-### Role Definition (`network-contributor-role.json`)
-The custom role, **Limited Network Contributor**, grants highly specific permissions, preventing the user from managing critical network components (VNets, NSGs, Firewalls) while allowing them to manage VMSS network interfaces.
-
-| Action | Purpose |
-| :--- | :--- |
-| `Microsoft.Network/loadBalancers/read` | Allows user to monitor the Load Balancer status. |
-| `Microsoft.Network/networkInterfaces/write` | Allows user to perform necessary maintenance/configuration on the VMSS NICs. |
-
 ## 🔒 I. Governance: Geo-Redundancy Policy Enforcement
 
 The project validated a critical organizational policy requiring Geo-Redundant storage for high availability and data residency compliance.
 
 ### The Policy
 A pre-existing Azure Policy was assigned to the environment to **Deny** the creation of any Storage Account that does not use a Geo-Redundant SKU.
+*The Policy implemented*
+> **![Policy Denial Screenshot](https://github.com/harsh103158/Azure-Governance-IAC-and-Security-Project/blob/7a203a8b2570a4b7cfb5905a3bbe5810bb0acace/images/Screenshot%202025-11-16%20014825.png)**
 
 ### The Validation (Policy Enforcement)
 The initial deployment attempt, which defaulted to a non-compliant SKU, failed immediately.
-
 > *The Azure Policy blocks the non-compliant deployment:*
-> **![Policy Denial Screenshot](https://github.com/harsh103158/Azure-Governance-IAC-and-Security-Project/blob/7a203a8b2570a4b7cfb5905a3bbe5810bb0acace/images/Screenshot%202025-11-16%20014825.png)**
+
 
 ### The Solution
 The Storage Account was successfully provisioned independently using the compliant parameter: **`storageSKU: Standard_GRS`**.
@@ -115,4 +104,4 @@ New-AzRoleAssignment -ObjectId $objectId `
 *Role Definition Proof*
 ![roledefinition](https://github.com/harsh103158/Azure-Governance-IAC-and-Security-Project/blob/61d0cc0527b62e1d3b63cfdb1d03b17a2f1ff62f/images/Screenshot%202025-11-17%20025507.png)
 *Role Assignment Proof*
-![roleassignment](
+![roleassignment](https://github.com/harsh103158/Azure-Governance-IAC-and-Security-Project/blob/7ff8c6cd0f494755f263367d9ef9104b71fb4328/images/Screenshot%202025-11-17%20030405.png)
