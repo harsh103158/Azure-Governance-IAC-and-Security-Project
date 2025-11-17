@@ -10,7 +10,7 @@ The deployment targets a production environment (`RG-Prod`) and features a high-
 
 ## 🏗️ Architecture and Components
 
-The core infrastructure is defined in `VNet-LB-VMSS-Storage.json` and includes the following resources:
+The core infrastructure is defined in `VNet-LB-VMSS-Storage.json` and `deploystorage.json` includes the following resources:
 
 | Resource | ARM Name | Purpose |
 | :--- | :--- | :--- |
@@ -77,7 +77,8 @@ The VM Scale Set (VMSS) deployment initially failed due to the complex escaping 
 All infrastructure issues (including dependencies and CSE) were resolved, resulting in a successful VMSS deployment.
 
 > *Successful VMSS Deployment Proof:*
-> **![Successful Deployment After Fixes](https://github.com/harsh103158/Azure-Governance-IAC-and-Security-Project/blob/89f78e669f232cdb177f4b78382e20c5c345094d/images/Screenshot%202025-11-17%20033045.png)
+> ![powershell-vmss-deployment](https://github.com/harsh103158/Azure-Governance-IAC-and-Security-Project/blob/237ff01bd3c0415d531b2bdbc29c776c47c39f3d/images/Screenshot%202025-11-16%20205430.png)
+> ![Successful Deployment After Fixes](https://github.com/harsh103158/Azure-Governance-IAC-and-Security-Project/blob/89f78e669f232cdb177f4b78382e20c5c345094d/images/Screenshot%202025-11-17%20033045.png)
 
 ---
 
