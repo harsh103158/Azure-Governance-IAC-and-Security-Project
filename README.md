@@ -19,6 +19,8 @@ The core infrastructure is defined in `VNet-LB-VMSS-Storage.json` and includes t
 | **Compute** | `webVMSS` | Virtual Machine Scale Set (2 instances) running **Windows Server 2025**. |
 | **Web Service** | Custom Script Extension | Installs IIS and configures a dynamic welcome page via `install-iis.ps1`. |
 | **Storage** | Deployed Separately | Policy-compliant Storage Account used to host the installation script. |
+*Resources post deployment*
+![resources](
 
 ---
 
