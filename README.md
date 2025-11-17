@@ -111,3 +111,8 @@ New-AzRoleDefinition -inputfile "./network-contributor-role.json"
 New-AzRoleAssignment -ObjectId $objectId `
     -RoleDefinitionName "Limited Network Contributor" `
     -Scope $fullScope
+```
+*Role Definition Proof*
+![roledefinition](https://github.com/harsh103158/Azure-Governance-IAC-and-Security-Project/blob/61d0cc0527b62e1d3b63cfdb1d03b17a2f1ff62f/images/Screenshot%202025-11-17%20025507.png)
+*Role Assignment Proof*
+![roleassignment](
